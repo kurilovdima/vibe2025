@@ -62,6 +62,7 @@
 <div class="add-form">
     <input type="text" id="newItem" placeholder="Enter new item">
     <button onclick="addItem()">Add</button>
+    <button id="addBtn">Add</button>
 </div>
 
 <script>
@@ -98,6 +99,23 @@
         items.splice(index, 1);
         renderList();
     }
+    document.getElementById('addBtn').addEventListener('click', async () => {
+        const text = document.getElementById('newItem').value.trim();
+        if (text) {
+            try {
+                const response = await fetch('/api/items', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+                if (response.ok) {
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error('Error adding item:', error);
+            }
+        }
+    });
 </script>
 
 </body>
