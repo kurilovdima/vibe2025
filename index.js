@@ -18,16 +18,16 @@ const dbConfig = {
     try {
       // Create a connection to the database
       const connection = await mysql.createConnection(dbConfig);
-      
+
       // Query to select all items from the database
       const query = 'SELECT id, text FROM items';
-      
+
       // Execute the query
       const [rows] = await connection.execute(query);
-      
+
       // Close the connection
       await connection.end();
-      
+
       // Return the retrieved items as a JSON array
       return rows;
     } catch (error) {
@@ -55,6 +55,15 @@ async function getHtmlRows() {
             <td><button class="delete-btn">×</button></td>
         </tr>
     `).join('');
+// ... (общие настройки как выше)
+
+async function updateItem(id, text) {
+  const connection = await mysql.createConnection(dbConfig);
+  await connection.execute(
+    'UPDATE items SET text = ? WHERE id = ?',
+    [text, id]
+  );
+  await connection.end();
 }
 
 // Modified request handler with template replacement
@@ -65,10 +74,10 @@ async function handleRequest(req, res) {
                 path.join(__dirname, 'index.html'), 
                 'utf8'
             );
-            
+
             // Replace template placeholder with actual content
             const processedHtml = html.replace('{{rows}}', await getHtmlRows());
-            
+
             res.writeHead(200, { 'Content-Type': 'text/html' });
             res.end(processedHtml);
         } catch (err) {
@@ -80,6 +89,25 @@ async function handleRequest(req, res) {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end('Route not found');
     }
+  // ... (другие обработчики)
+
+  else if (req.url.startsWith('/api/items/') && req.method === 'PUT') {
+    const id = req.url.split('/')[3];
+    let body = '';
+    req.on('data', chunk => body += chunk.toString());
+    req.on('end', async () => {
+      try {
+        const { text } = JSON.parse(body);
+        await updateItem(id, text);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ id, text }));
+      } catch (error) {
+        console.error(error);
+        res.writeHead(500);
+        res.end('Error updating item');
+      }
+    });
+  }
 }
 
 // Create and start server

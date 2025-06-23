@@ -62,6 +62,15 @@
 <div class="add-form">
     <input type="text" id="newItem" placeholder="Enter new item">
     <button onclick="addItem()">Add</button>
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <form id="editForm">
+            <input type="hidden" id="editId">
+            <input type="text" id="editText" placeholder="Edit item text">
+            <button type="submit">Save Changes</button>
+        </form>
+    </div>
 </div>
 
 <script>
@@ -98,6 +107,38 @@
         items.splice(index, 1);
         renderList();
     }
+    // Открытие модального окна
+    document.getElementById('listBody').addEventListener('click', (e) => {
+        if (e.target.classList.contains('edit-btn')) {
+            const id = e.target.getAttribute('data-id');
+            const text = e.target.closest('tr').querySelector('td:nth-child(2)').textContent;
+            document.getElementById('editId').value = id;
+            document.getElementById('editText').value = text;
+            document.getElementById('editModal').style.display = 'block';
+        }
+    });
+
+    // Сохранение изменений
+    document.getElementById('editForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const text = document.getElementById('editText').value.trim();
+        if (text) {
+            try {
+                const response = await fetch(`/api/items/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+                if (response.ok) {
+                    document.getElementById('editModal').style.display = 'none';
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error('Error updating item:', error);
+            }
+        }
+    });
 </script>
 
 </body>
